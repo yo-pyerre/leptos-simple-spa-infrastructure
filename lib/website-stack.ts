@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 
 import { CfnBucket, CfnBucketPolicy } from 'aws-cdk-lib/aws-s3'
 
-export class LeptosSimpleSpaInfrastructureStack extends Stack {
+export class WebsiteStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
@@ -38,5 +38,7 @@ export class LeptosSimpleSpaInfrastructureStack extends Stack {
         ]
     }
   });
+
+  
 }
 }
