@@ -3,11 +3,14 @@ import { Construct } from 'constructs';
 
 import { CfnFunction } from 'aws-cdk-lib/aws-lambda'
 import { CfnRole } from 'aws-cdk-lib/aws-iam'
-import { CfnApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2'
-import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2'
+
+export interface APIGWStackProps extends StackProps {
+    deploymentBucketName: string
+}
 
 export class APIGWStack extends Stack {
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    constructor(scope: Construct, id: string, props: APIGWStackProps) {
         super(scope, id, props);
 
         const pasteLambdaName = id + '-' + 'PasteLambda'
@@ -28,25 +31,29 @@ export class APIGWStack extends Stack {
                 ]
             }
         })
+
+        const pasteLambdaKey = 'lambdas/bootstrap.zip'
+
         const pasteLambdaFn = new CfnFunction(this, pasteLambdaName, {
             description: 'Lambda backing "/paste"',
             functionName: pasteLambdaName,
             code: {
-                s3Bucket: '',
-                s3Key: '',
+                s3Bucket: props.deploymentBucketName,
+                s3Key: pasteLambdaKey,
             },
-            role: pasteLambdaRoleName,
-            environment: {
-            },
+            role: pasteLambdaRole.attrArn,
             memorySize: 128,
             packageType: 'Zip',
-            // runtime:
+            handler: 'not.needed',
+            // For Rust lambdas, need to use 'OS-only' runtime
+            runtime: 'provided.al2023'
         })
 
         const apiName = pasteLambdaName + 'HTTPAPI'
         const cfnRestAPI = new CfnApi(this, apiName, {
             description: 'HTTP APIs that forward requests to Lambdas',
             name: apiName,
+            protocolType: 'HTTP'
             // apiKeySelectionExpression: 'apiKeySelectionExpression',
             // basePath: 'basePath',
             // body: body,
@@ -68,7 +75,6 @@ export class APIGWStack extends Stack {
             // disableExecuteApiEndpoint: false,
             // disableSchemaValidation: false,
             // failOnWarnings: false,
-            // protocolType: 'protocolType',
             // routeKey: 'routeKey',
             // routeSelectionExpression: 'routeSelectionExpression',
             // tags: {

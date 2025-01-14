@@ -11,4 +11,7 @@ const appName = "PastebinLeptosApp-"
 // Can add proper staging later
 
 const websiteStack = new WebsiteStack(app, appName + "WebsiteStack");
-const apigwStack = new APIGWStack(app, appName + "APIGWStack")
+
+const apigwStack = new APIGWStack(app, appName + "APIGWStack", {
+    deploymentBucketName: websiteStack.bucketName
+})
