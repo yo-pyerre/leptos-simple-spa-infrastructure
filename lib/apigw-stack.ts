@@ -1,4 +1,4 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
 import { CfnFunction } from 'aws-cdk-lib/aws-lambda'
@@ -13,9 +13,28 @@ export class APIGWStack extends Stack {
     constructor(scope: Construct, id: string, props: APIGWStackProps) {
         super(scope, id, props);
 
-        const pasteLambdaName = id + '-' + 'PasteLambda'
+        const lambdaNames = ["Paste"]
 
-        const pasteLambdaRoleName = pasteLambdaName + 'ExecutionRole'
+        let lambdaRoleMap = new Map<string, string>()
+
+        const lambdaRolesMapping = lambdaNames.reduce((mapping, name) => {
+            mapping[name] = this.createLambdaAndRole(name, props.deploymentBucketName, 'lambdas/bootstrap.zip')
+            return mapping;
+        }, {} as Record<string, string>)
+
+        new CfnOutput(this, 'LambdaRolesMapping', {
+            value: JSON.stringify(lambdaRolesMapping),
+            exportName: 'LambdaRolesMapping'
+        })
+
+        this.createApi();
+    };
+
+    // Returns ARN reference to lambda role
+    private createLambdaAndRole(name: string, deploymentBucket: string, deploymentKey: string): string {
+        const lambdaName = `${this.node.id}-${name}Lambda`
+
+        const pasteLambdaRoleName = `${lambdaName}ExecutionRole`
         const pasteLambdaRole = new CfnRole(this, pasteLambdaRoleName, {
             roleName: pasteLambdaRoleName,
             assumeRolePolicyDocument: {
@@ -32,14 +51,14 @@ export class APIGWStack extends Stack {
             }
         })
 
-        const pasteLambdaKey = 'lambdas/bootstrap.zip'
+        const lambdaKey = 'lambdas/bootstrap.zip'
 
-        const pasteLambdaFn = new CfnFunction(this, pasteLambdaName, {
+        const pasteLambdaFn = new CfnFunction(this, lambdaName, {
             description: 'Lambda backing "/paste"',
-            functionName: pasteLambdaName,
+            functionName: lambdaName,
             code: {
-                s3Bucket: props.deploymentBucketName,
-                s3Key: pasteLambdaKey,
+                s3Bucket: deploymentBucket,
+                s3Key: deploymentKey,
             },
             role: pasteLambdaRole.attrArn,
             memorySize: 128,
@@ -49,39 +68,16 @@ export class APIGWStack extends Stack {
             runtime: 'provided.al2023'
         })
 
-        const apiName = pasteLambdaName + 'HTTPAPI'
+        return pasteLambdaRole.attrArn
+}
+
+    // need to setup auth later
+    private createApi(): void {
+        const apiName = `${this.node.id}HTTPAPI`
         const cfnRestAPI = new CfnApi(this, apiName, {
             description: 'HTTP APIs that forward requests to Lambdas',
             name: apiName,
             protocolType: 'HTTP'
-            // apiKeySelectionExpression: 'apiKeySelectionExpression',
-            // basePath: 'basePath',
-            // body: body,
-            // bodyS3Location: {
-            //   bucket: 'bucket',
-            //   etag: 'etag',
-            //   key: 'key',
-            //   version: 'version',
-            // },
-            // corsConfiguration: {
-            //   allowCredentials: false,
-            //   allowHeaders: ['allowHeaders'],
-            //   allowMethods: ['allowMethods'],
-            //   allowOrigins: ['allowOrigins'],
-            //   exposeHeaders: ['exposeHeaders'],
-            //   maxAge: 123,
-            // },
-            // credentialsArn: 'credentialsArn',
-            // disableExecuteApiEndpoint: false,
-            // disableSchemaValidation: false,
-            // failOnWarnings: false,
-            // routeKey: 'routeKey',
-            // routeSelectionExpression: 'routeSelectionExpression',
-            // tags: {
-            //   tagsKey: 'tags',
-            // },
-            // target: 'target',
-            // version: 'version',
           });
-    };
+    }
 }
