@@ -10,6 +10,8 @@ export interface APIGWStackProps extends StackProps {
 }
 
 export class APIGWStack extends Stack {
+    public readonly lambdaRolesMapping: string;
+
     constructor(scope: Construct, id: string, props: APIGWStackProps) {
         super(scope, id, props);
 
@@ -26,6 +28,7 @@ export class APIGWStack extends Stack {
             value: JSON.stringify(lambdaRolesMapping),
             exportName: 'LambdaRolesMapping'
         })
+        this.lambdaRolesMapping = JSON.stringify(lambdaRolesMapping)
 
         this.createApi();
     };
