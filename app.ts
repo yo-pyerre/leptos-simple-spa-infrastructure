@@ -12,8 +12,12 @@ const appName = "PastebinLeptosApp-"
 
 const websiteStack = new WebsiteStack(app, appName + "WebsiteStack");
 
+const storageStack = new StorageStack(app, appName + "StorageStack");
+
 const apigwStack = new APIGWStack(app, appName + "APIGWStack", {
-    deploymentBucketName: websiteStack.bucketName
+    websiteStack,
+    storageStack
 });
 
-const storageStack = new StorageStack(app, appName + "StorageStack");
+apigwStack.addDependency(storageStack)
+apigwStack.addDependency(websiteStack)
