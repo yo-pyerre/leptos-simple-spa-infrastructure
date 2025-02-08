@@ -10,36 +10,23 @@ export interface APIGWStackProps extends StackProps {
 }
 
 export class APIGWStack extends Stack {
-    public readonly lambdaRolesMapping: string;
 
     constructor(scope: Construct, id: string, props: APIGWStackProps) {
         super(scope, id, props);
 
         const lambdaNames = ["Paste"]
 
-        let lambdaRoleMap = new Map<string, string>()
-
-        const lambdaRolesMapping = lambdaNames.reduce((mapping, name) => {
-            mapping[name] = this.createLambdaAndRole(name, props.deploymentBucketName, 'lambdas/bootstrap.zip')
-            return mapping;
-        }, {} as Record<string, string>)
-
-        new CfnOutput(this, 'LambdaRolesMapping', {
-            value: JSON.stringify(lambdaRolesMapping),
-            exportName: 'LambdaRolesMapping'
-        })
-        this.lambdaRolesMapping = JSON.stringify(lambdaRolesMapping)
+        this.createLambdaAndRole(lambdaNames[0], props.deploymentBucketName, 'lambdas/bootstrap.zip')
 
         this.createApi();
     };
 
-    // Returns ARN reference to lambda role
-    private createLambdaAndRole(name: string, deploymentBucket: string, deploymentKey: string): string {
+    private createLambdaAndRole(name: string, deploymentBucket: string, deploymentKey: string) {
         const lambdaName = `${this.node.id}-${name}Lambda`
 
-        const pasteLambdaRoleName = `${lambdaName}ExecutionRole`
-        const pasteLambdaRole = new CfnRole(this, pasteLambdaRoleName, {
-            roleName: pasteLambdaRoleName,
+        const lambdaRoleName = `${lambdaName}Role`
+        const lambdaRole = new CfnRole(this, lambdaRoleName, {
+            roleName: lambdaRoleName,
             assumeRolePolicyDocument: {
                 "Version": "2012-10-17",
                 "Statement": [
@@ -56,22 +43,25 @@ export class APIGWStack extends Stack {
 
         const lambdaKey = 'lambdas/bootstrap.zip'
 
-        const pasteLambdaFn = new CfnFunction(this, lambdaName, {
-            description: 'Lambda backing "/paste"',
+        const lambdaFn = new CfnFunction(this, lambdaName, {
+            description: `Lambda backing "/${name}"`,
             functionName: lambdaName,
             code: {
                 s3Bucket: deploymentBucket,
                 s3Key: deploymentKey,
             },
-            role: pasteLambdaRole.attrArn,
+            role: lambdaRole.attrArn,
             memorySize: 128,
             packageType: 'Zip',
             handler: 'not.needed',
             // For Rust lambdas, need to use 'OS-only' runtime
             runtime: 'provided.al2023'
         })
-
-        return pasteLambdaRole.attrArn
+        
+        new CfnOutput(this, `${name}LambdaRoleArn`, {
+            value: lambdaRole.attrArn,
+            exportName: `${name}LambdaRoleArn`
+        }); 
 }
 
     // need to setup auth later

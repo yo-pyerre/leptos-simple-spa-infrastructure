@@ -14,8 +14,6 @@ const websiteStack = new WebsiteStack(app, appName + "WebsiteStack");
 
 const apigwStack = new APIGWStack(app, appName + "APIGWStack", {
     deploymentBucketName: websiteStack.bucketName
-})
+});
 
-const storageStack = new StorageStack(app, appName + "StorageStack", {
-    lambdaRolesMapping: apigwStack.lambdaRolesMapping
-})
+const storageStack = new StorageStack(app, appName + "StorageStack");
