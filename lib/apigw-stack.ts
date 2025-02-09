@@ -101,8 +101,8 @@ export class APIGWStack extends Stack {
             environment: {
                 variables: {
                     BUCKET_NAME: storageStack.bucketName,
-                    METADATA_TABLE: storageStack.metadataTableName,
-                    FILES_TABLE: storageStack.filesTableName
+                    METADATA_TABLE: storageStack.metadataTable.tableName!,
+                    FILES_TABLE: storageStack.filesTable.tableName!
                 }
             }
         })
