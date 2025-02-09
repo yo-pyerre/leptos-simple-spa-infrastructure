@@ -38,18 +38,18 @@ export class StorageStack extends Stack {
     }
 
     private createStorageBucket(): string {
-        const bucketName: string = "pastebin-leptos-app-storage";
-        const bucketLogicalId : string = reformatBucketConstructLogicalId(bucketName);
-      
-        const storageBucket = new CfnBucket(this, bucketLogicalId, {
-            bucketName: bucketName,
-            publicAccessBlockConfiguration: BlockPublicAccess.BLOCK_ALL
-        });
+      const bucketName: string = "pastebin-leptos-app-storage";
+      const bucketLogicalId : string = reformatBucketConstructLogicalId(bucketName);
+    
+      const storageBucket = new CfnBucket(this, bucketLogicalId, {
+          bucketName: bucketName,
+          publicAccessBlockConfiguration: BlockPublicAccess.BLOCK_ALL
+      });
 
       return bucketName;
     }
 
-      private createMetadataTable(): CfnTable {
+    private createMetadataTable(): CfnTable {
       return new CfnTable(this, `${this.node.id}MetadataTable`, {
           tableName: 'PastebinMetadataTable',
           keySchema: [{
@@ -120,10 +120,10 @@ export class StorageStack extends Stack {
       });
     }
 
-      private createFilesTable(): CfnTable {
-        return new CfnTable(this, `${this.node.id}FilesTable`, {
-          tableName: 'PastebinFilesTable',
-          keySchema: [
+    private createFilesTable(): CfnTable {
+      return new CfnTable(this, `${this.node.id}FilesTable`, {
+        tableName: 'PastebinFilesTable',
+        keySchema: [
           {
             attributeName: 'pasteId',
             keyType: 'HASH',
@@ -133,7 +133,7 @@ export class StorageStack extends Stack {
             keyType: 'RANGE'
           }
         ],
-          attributeDefinitions: [
+        attributeDefinitions: [
           {
             attributeName: 'pasteId',
             attributeType: 'S',
@@ -147,6 +147,7 @@ export class StorageStack extends Stack {
         sseSpecification: {
           sseEnabled: true, 
         }
-      });
-    }
+      }
+    );
+  }
 }

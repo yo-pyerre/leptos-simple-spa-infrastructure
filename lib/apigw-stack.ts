@@ -97,7 +97,14 @@ export class APIGWStack extends Stack {
             packageType: 'Zip',
             handler: 'not.needed',
             // For Rust lambdas, need to use 'OS-only' runtime
-            runtime: 'provided.al2023'
+            runtime: 'provided.al2023',
+            environment: {
+                variables: {
+                    BUCKET_NAME: storageStack.bucketName,
+                    METADATA_TABLE: storageStack.metadataTableName,
+                    FILES_TABLE: storageStack.filesTableName
+                }
+            }
         })
 
         return lambdaRole.attrArn;
